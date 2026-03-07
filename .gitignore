@@ -1,0 +1,4 @@
+db_test
+testdb/
+*.o
+*.dSYM

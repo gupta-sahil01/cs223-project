@@ -1,0 +1,15 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/include",
+                "/opt/homebrew/Cellar/rocksdb/10.10.1/include"
+            ],
+            "cppStandard": "c++17",
+            "macFrameworkPath": [],
+            "compilerPath": "/usr/bin/g++"
+        }
+    ],
+    "version": 4
+}
