@@ -1,3 +1,4 @@
+build/
 db_test
 testdb/
 *.o
