@@ -1,24 +1,22 @@
 cmake_minimum_required(VERSION 3.15)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 project(cs223_project)
 
-set(CMAKE_CXX_STANDARD 17)
 
 # Find RocksDB - works on both Mac and Windows
 find_path(ROCKSDB_INCLUDE_DIR rocksdb/db.h
-    HINTS
-    /opt/homebrew/include                          # Mac Apple Silicon
-    /usr/local/include                             # Mac Intel
-    "C:/rocksdb/include"                           # Windows common path
-    "C:/Program Files/rocksdb/include"
+
+    # HINTS
+    # /opt/homebrew/include                          # Mac Apple Silicon
+    # /usr/local/include                             # Mac Intel
+    # "C:/rocksdb/include"                           # Windows common path
+    # "C:/Program Files/rocksdb/include"
 )
 
-find_library(ROCKSDB_LIB rocksdb
-    HINTS
-    /opt/homebrew/lib                              # Mac Apple Silicon
-    /usr/local/lib                                 # Mac Intel
-    "C:/rocksdb/lib"                               # Windows common path
-    "C:/Program Files/rocksdb/lib"
-)
+find_package(RocksDB CONFIG REQUIRED)
 
 if(NOT ROCKSDB_INCLUDE_DIR OR NOT ROCKSDB_LIB)
     message(FATAL_ERROR "RocksDB not found. Please set ROCKSDB_INCLUDE_DIR and ROCKSDB_LIB manually.")
@@ -46,7 +44,7 @@ target_include_directories(db_test PRIVATE
     ${ROCKSDB_INCLUDE_DIR}
 )
 
-target_link_libraries(db_test PRIVATE ${ROCKSDB_LIB})
+target_link_libraries(db_test PRIVATE RocksDB::rocksdb)
 
 # Link extra libs needed on each platform
 if(WIN32)

@@ -31,6 +31,8 @@ void WorkloadRunner::loadInitialData(const std::string& insert_file) {
     std::string line;
 
     while (std::getline(file, line)) {
+        if (!line.empty() && line.back() == '\r')
+            line.pop_back();
         if (line == "INSERT" || line == "END" || line.empty()) continue;
 
         if (line.rfind("KEY:", 0) == 0) {

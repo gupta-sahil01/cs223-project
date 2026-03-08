@@ -4,11 +4,12 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/include",
-                "/opt/homebrew/Cellar/rocksdb/10.10.1/include"
+                "/opt/homebrew/Cellar/rocksdb/10.10.1/include",
+                "C:\\msys64\\ucrt64\\lib\\cmake\\rocksdb"
             ],
             "cppStandard": "c++17",
             "macFrameworkPath": [],
-            "compilerPath": "/usr/bin/g++"
+            "compilerPath": "C:/msys64/ucrt64/bin/g++.exe"
         }
     ],
     "version": 4
