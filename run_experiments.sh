@@ -10,10 +10,11 @@
 # Usage:  ./run_experiments.sh
 # ─────────────────────────────────────────────────────────────────────────────
 
-BINARY="/Users/sahilgupta/Desktop/UCI/MCS_2026/Q2/TPDM/Project/db_test"
-INPUT1="/Users/sahilgupta/Desktop/UCI/MCS_2026/Q2/TPDM/Project/Workloads/Workloads/workload1/input1.txt"
-INPUT2="/Users/sahilgupta/Desktop/UCI/MCS_2026/Q2/TPDM/Project/Workloads/Workloads/workload2/input2.txt"
-RESULTS_DIR="/Users/sahilgupta/Desktop/UCI/MCS_2026/Q2/TPDM/Project/results"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BINARY="$SCRIPT_DIR/build/db_test"
+INPUT1="$SCRIPT_DIR/Workloads/Workloads/workload1/input1.txt"
+INPUT2="$SCRIPT_DIR/Workloads/Workloads/workload2/input2.txt"
+RESULTS_DIR="$SCRIPT_DIR/results"
 DIST_DIR="$RESULTS_DIR/dist"
 
 mkdir -p "$RESULTS_DIR" "$DIST_DIR"

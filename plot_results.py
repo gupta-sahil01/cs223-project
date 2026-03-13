@@ -1,5 +1,5 @@
 """
-CS 223 – Plot Generator (fixed)
+CS 223 – Plot Generator
 Run:  python3 plot_results.py
 """
 
@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 import os
+from dotenv import load_dotenv
 
-# ─────────────────────────────────────────────────────────────────────────────
-BASE = "/Users/sahilgupta/Desktop/UCI/MCS_2026/Q2/TPDM/Project"
+load_dotenv()
+BASE = os.path.dirname(os.path.abspath(__file__))
 RES  = f"{BASE}/results"
 DIST = f"{RES}/dist"
 OUT  = f"{RES}/plots"
@@ -19,7 +20,6 @@ os.makedirs(OUT, exist_ok=True)
 w1 = pd.read_csv(f"{RES}/workload1.csv")
 w2 = pd.read_csv(f"{RES}/workload2.csv")
 
-# ─────────────────────────────────────────────────────────────────────────────
 OCC_COLOR  = "#2196F3"
 TPL_COLOR  = "#F44336"
 FIGSIZE    = (7, 4.5)
@@ -40,18 +40,22 @@ def save(fig, name):
     plt.close(fig)
     print(f"  saved → {path}")
 
-def split_proto(df):
-    return df[df.protocol == "occ"], df[df.protocol == "2pl"]
+def prep_proto(df, protocol, x_col, y_col):
+    subset = df[df.protocol == protocol].copy()
+    subset = subset.groupby(x_col, as_index=False)[y_col].mean()
+    subset = subset.sort_values(x_col)
+    return subset
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 6.1 – Retry rate vs contention
 # ─────────────────────────────────────────────────────────────────────────────
 def plot_retries_vs_contention(df, title, fname):
     data = df[df.threads == 4]
-    occ, tpl = split_proto(data)
+    occ = prep_proto(data, "occ", "hotset_prob", "retry_pct")
+    tpl = prep_proto(data, "2pl", "hotset_prob", "retry_pct")
     fig, ax = plt.subplots(figsize=FIGSIZE)
-    ax.plot(occ.hotset_prob, occ.retry_pct, color=OCC_COLOR, marker="o", label="OCC")
-    ax.plot(tpl.hotset_prob, tpl.retry_pct, color=TPL_COLOR, marker="s", label="Conservative 2PL")
+    ax.plot(occ["hotset_prob"], occ["retry_pct"], color=OCC_COLOR, marker="o", label="OCC")
+    ax.plot(tpl["hotset_prob"], tpl["retry_pct"], color=TPL_COLOR, marker="s", label="Conservative 2PL")
     ax.set_xlabel("Contention Level (hotset probability)")
     ax.set_ylabel("Transactions Retried (%)")
     ax.set_title(f"{title}\nRetry Rate vs. Contention  (threads=4)")
@@ -67,23 +71,26 @@ plot_retries_vs_contention(w2, "Workload 2 (NewOrder+Payment)", "6_1_w2_retries_
 # ─────────────────────────────────────────────────────────────────────────────
 def plot_throughput_vs_threads(df, title, fname):
     data = df[df.hotset_prob == 0.5]
-    occ, tpl = split_proto(data)
+    occ = prep_proto(data, "occ", "threads", "throughput_tps")
+    tpl = prep_proto(data, "2pl", "threads", "throughput_tps")
     fig, ax = plt.subplots(figsize=FIGSIZE)
-    ax.plot(occ.threads, occ.throughput_tps, color=OCC_COLOR, marker="o", label="OCC")
-    ax.plot(tpl.threads, tpl.throughput_tps, color=TPL_COLOR, marker="s", label="Conservative 2PL")
+    ax.plot(occ["threads"], occ["throughput_tps"], color=OCC_COLOR, marker="o", label="OCC")
+    ax.plot(tpl["threads"], tpl["throughput_tps"], color=TPL_COLOR, marker="s", label="Conservative 2PL")
     ax.set_xlabel("Number of Threads")
     ax.set_ylabel("Throughput (transactions/sec)")
     ax.set_title(f"{title}\nThroughput vs. Threads  (hotset_prob=0.5)")
-    ax.xaxis.set_major_locator(ticker.FixedLocator(occ.threads.tolist()))
+    ax.xaxis.set_major_locator(ticker.FixedLocator(sorted(occ["threads"].tolist())))
     ax.legend()
     save(fig, fname)
 
+
 def plot_throughput_vs_contention(df, title, fname):
     data = df[df.threads == 4]
-    occ, tpl = split_proto(data)
+    occ = prep_proto(data, "occ", "hotset_prob", "throughput_tps")
+    tpl = prep_proto(data, "2pl", "hotset_prob", "throughput_tps")
     fig, ax = plt.subplots(figsize=FIGSIZE)
-    ax.plot(occ.hotset_prob, occ.throughput_tps, color=OCC_COLOR, marker="o", label="OCC")
-    ax.plot(tpl.hotset_prob, tpl.throughput_tps, color=TPL_COLOR, marker="s", label="Conservative 2PL")
+    ax.plot(occ["hotset_prob"], occ["throughput_tps"], color=OCC_COLOR, marker="o", label="OCC")
+    ax.plot(tpl["hotset_prob"], tpl["throughput_tps"], color=TPL_COLOR, marker="s", label="Conservative 2PL")
     ax.set_xlabel("Contention Level (hotset probability)")
     ax.set_ylabel("Throughput (transactions/sec)")
     ax.set_title(f"{title}\nThroughput vs. Contention  (threads=4)")
@@ -96,14 +103,17 @@ def plot_throughput_occ_vs_2pl_bar(df, title, fname):
     at each thread count. Cleaner than the broken high/low graph.
     """
     data = df[df.hotset_prob == 0.5]
-    occ, tpl = split_proto(data)
-    threads = occ.threads.tolist()
+
+    occ = prep_proto(data, "occ", "threads", "throughput_tps")
+    tpl = prep_proto(data, "2pl", "threads", "throughput_tps")
+
+    threads = sorted(occ["threads"].tolist())
     x = np.arange(len(threads))
     w = 0.35
 
     fig, ax = plt.subplots(figsize=FIGSIZE)
-    ax.bar(x - w/2, occ.throughput_tps, w, color=OCC_COLOR, alpha=0.85, label="OCC")
-    ax.bar(x + w/2, tpl.throughput_tps, w, color=TPL_COLOR, alpha=0.85, label="Conservative 2PL")
+    ax.bar(x - w/2, occ["throughput_tps"], w, color=OCC_COLOR, alpha=0.85, label="OCC")
+    ax.bar(x + w/2, tpl["throughput_tps"], w, color=TPL_COLOR, alpha=0.85, label="Conservative 2PL")
     ax.set_xticks(x)
     ax.set_xticklabels([str(t) for t in threads])
     ax.set_xlabel("Number of Threads")
@@ -126,23 +136,29 @@ plot_throughput_occ_vs_2pl_bar(  w2, "Workload 2 (NewOrder+Payment)", "6_2_w2_th
 # ─────────────────────────────────────────────────────────────────────────────
 def plot_rt_vs_threads(df, title, fname):
     data = df[df.hotset_prob == 0.5]
-    occ, tpl = split_proto(data)
+
+    occ = prep_proto(data, "occ", "threads", "avg_rt_us")
+    tpl = prep_proto(data, "2pl", "threads", "avg_rt_us")
+
     fig, ax = plt.subplots(figsize=FIGSIZE)
-    ax.plot(occ.threads, occ.avg_rt_us, color=OCC_COLOR, marker="o", label="OCC")
-    ax.plot(tpl.threads, tpl.avg_rt_us, color=TPL_COLOR, marker="s", label="Conservative 2PL")
+    ax.plot(occ["threads"], occ["avg_rt_us"], color=OCC_COLOR, marker="o", label="OCC")
+    ax.plot(tpl["threads"], tpl["avg_rt_us"], color=TPL_COLOR, marker="s", label="Conservative 2PL")
     ax.set_xlabel("Number of Threads")
     ax.set_ylabel("Avg Response Time (µs)")
     ax.set_title(f"{title}\nAvg Response Time vs. Threads  (hotset_prob=0.5)")
-    ax.xaxis.set_major_locator(ticker.FixedLocator(occ.threads.tolist()))
+    ax.xaxis.set_major_locator(ticker.FixedLocator(sorted(occ["threads"].tolist())))
     ax.legend()
     save(fig, fname)
 
 def plot_rt_vs_contention(df, title, fname):
     data = df[df.threads == 4]
-    occ, tpl = split_proto(data)
+
+    occ = prep_proto(data, "occ", "hotset_prob", "avg_rt_us")
+    tpl = prep_proto(data, "2pl", "hotset_prob", "avg_rt_us")
+
     fig, ax = plt.subplots(figsize=FIGSIZE)
-    ax.plot(occ.hotset_prob, occ.avg_rt_us, color=OCC_COLOR, marker="o", label="OCC")
-    ax.plot(tpl.hotset_prob, tpl.avg_rt_us, color=TPL_COLOR, marker="s", label="Conservative 2PL")
+    ax.plot(occ["hotset_prob"], occ["avg_rt_us"], color=OCC_COLOR, marker="o", label="OCC")
+    ax.plot(tpl["hotset_prob"], tpl["avg_rt_us"], color=TPL_COLOR, marker="s", label="Conservative 2PL")
     ax.set_xlabel("Contention Level (hotset probability)")
     ax.set_ylabel("Avg Response Time (µs)")
     ax.set_title(f"{title}\nAvg Response Time vs. Contention  (threads=4)")

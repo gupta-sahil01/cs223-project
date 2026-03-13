@@ -13,10 +13,21 @@ find_path(ROCKSDB_INCLUDE_DIR rocksdb/db.h
     # /opt/homebrew/include                          # Mac Apple Silicon
     # /usr/local/include                             # Mac Intel
     # "C:/rocksdb/include"                           # Windows common path
-    # "C:/Program Files/rocksdb/include"
+    "C:/msys64/ucrt64/bin/librocksdb.dll"
+    "C:/msys64/ucrt64/lib/librocksdb.a"
+    "C:/msys64/ucrt64/lib/librocksdb.dll.a"
 )
 
 find_package(RocksDB CONFIG REQUIRED)
+
+find_library(ROCKSDB_LIB NAMES rocksdb
+    HINTS
+    # /opt/homebrew/lib                          # Mac Apple Silicon
+    # /usr/local/lib                             # Mac Intel
+    "C:/msys64/ucrt64/bin/librocksdb.dll"
+    "C:/msys64/ucrt64/lib/librocksdb.a"
+    "C:/msys64/ucrt64/lib/librocksdb.dll.a"
+)
 
 if(NOT ROCKSDB_INCLUDE_DIR OR NOT ROCKSDB_LIB)
     message(FATAL_ERROR "RocksDB not found. Please set ROCKSDB_INCLUDE_DIR and ROCKSDB_LIB manually.")
