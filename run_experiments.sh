@@ -1,15 +1,3 @@
-#!/bin/bash
-# ─────────────────────────────────────────────────────────────────────────────
-# CS 223 – Full Experiment Runner  (sections 6.1, 6.2, 6.3)
-#
-# Outputs:
-#   results/workload1.csv        – sweep results (throughput, avg RT, retries)
-#   results/workload2.csv        – same for workload 2
-#   results/dist/                – per-transaction CSVs for RT distributions
-#
-# Usage:  ./run_experiments.sh
-# ─────────────────────────────────────────────────────────────────────────────
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BINARY="$SCRIPT_DIR/build/db_test"
 INPUT1="$SCRIPT_DIR/Workloads/Workloads/workload1/input1.txt"
@@ -19,28 +7,21 @@ DIST_DIR="$RESULTS_DIR/dist"
 
 mkdir -p "$RESULTS_DIR" "$DIST_DIR"
 
-# ── Sweep parameters ──────────────────────────────────────────────────────────
 THREAD_COUNTS=(1 2 4 8 16)
 HOTSET_PROBS=(0.0 0.2 0.4 0.6 0.8 1.0)
 PROTOCOLS=("occ" "2pl")
 
-FIXED_THREADS=4        # used when varying contention
-FIXED_HOTSET_PROB=0.5  # used when varying threads
+FIXED_THREADS=4        
+FIXED_HOTSET_PROB=0.5  
 HOTSET_SIZE=10
 TX_PER_THREAD=200
 
-# ── Distribution run parameters (fixed, moderate contention) ─────────────────
-# These are run once per protocol per workload to collect per-TX response times
 DIST_THREADS=4
 DIST_HOTSET_PROB=0.5
-DIST_TX_PER_THREAD=500   # more samples = smoother distribution histogram
+DIST_TX_PER_THREAD=500   
 
 CSV_HEADER="protocol,threads,hotset_prob,hotset_size,throughput_tps,avg_rt_us,retry_pct,total_retries"
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Helper: run one sweep experiment, append a row to CSV
-# run_sweep <workload_num> <protocol> <threads> <hprob> <hsize> <csv>
-# ─────────────────────────────────────────────────────────────────────────────
 run_sweep() {
     local WL=$1 PROTO=$2 THREADS=$3 HPROB=$4 HSIZE=$5 CSV=$6
 
@@ -66,10 +47,6 @@ run_sweep() {
            "$PROTO" "$THREADS" "$HPROB" "$THROUGHPUT" "$AVG_RT" "$RETRY_PCT"
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Helper: run a distribution collection run, write per-TX CSV
-# run_dist <workload_num> <protocol> <out_dist_csv>
-# ─────────────────────────────────────────────────────────────────────────────
 run_dist() {
     local WL=$1 PROTO=$2 DIST_CSV=$3
 
@@ -87,16 +64,11 @@ run_dist() {
     echo "  distribution saved → $DIST_CSV"
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Run experiments for one workload
-# run_workload <workload_num> <csv_path>
-# ─────────────────────────────────────────────────────────────────────────────
 run_workload() {
     local WL=$1 CSV=$2
 
     echo "$CSV_HEADER" > "$CSV"
 
-    # ── 6.1 / 6.2 / 6.3a-b: vary threads (fixed contention) ────────────────
     echo "── Varying threads  (hotset_prob=$FIXED_HOTSET_PROB) ──"
     for PROTO in "${PROTOCOLS[@]}"; do
         for T in "${THREAD_COUNTS[@]}"; do
@@ -104,7 +76,6 @@ run_workload() {
         done
     done
 
-    # ── 6.1 / 6.2 / 6.3a-b: vary contention (fixed threads) ────────────────
     echo "── Varying contention  (threads=$FIXED_THREADS) ──"
     for PROTO in "${PROTOCOLS[@]}"; do
         for HPROB in "${HOTSET_PROBS[@]}"; do
@@ -112,7 +83,6 @@ run_workload() {
         done
     done
 
-    # ── 6.3c: response time distributions (one run per protocol) ────────────
     echo "── Collecting RT distributions ──"
     for PROTO in "${PROTOCOLS[@]}"; do
         DIST_OUT="$DIST_DIR/w${WL}_${PROTO}_dist.csv"
@@ -121,10 +91,6 @@ run_workload() {
 
     echo "Results saved → $CSV"
 }
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Main
-# ─────────────────────────────────────────────────────────────────────────────
 
 echo "════════════════════════════════════════"
 echo " WORKLOAD 1"
